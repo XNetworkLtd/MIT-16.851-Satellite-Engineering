@@ -1,0 +1,78 @@
+%-- Spacecraft --
+Create Spacecraft SAT;
+SAT.DateFormat = UTCGregorian;
+SAT.Epoch = '01 Aug 2026 10:30:00.000';  % <-- REPLACE with your epoch
+SAT.CoordinateSystem = EarthMJ2000Eq;
+SAT.DisplayStateType = Keplerian;
+SAT.SMA = 6928.14;                        % <-- R_E + your altitude (km)
+SAT.ECC = 0.0001;
+SAT.INC = 55.0;                           % <-- your max latitude (deg)
+SAT.RAAN = 185.5493;                      % <-- GMST + initial longitude (computed)
+SAT.AOP = 0.0;
+SAT.TA = 0.0;
+
+%-- Force Model --
+Create ForceModel FM;
+FM.CentralBody = Earth;
+FM.PrimaryBodies = {Earth};
+FM.GravityField.Earth.Degree = 4;
+FM.GravityField.Earth.Order = 4;
+FM.GravityField.Earth.PotentialFile = 'JGM2.cof';
+FM.Drag.AtmosphereModel = JacchiaRoberts;
+FM.PointMasses = {Sun, Luna};
+FM.SRP = Off;
+
+Create Propagator PROP;
+PROP.FM = FM;
+
+%-- Ground Stations --
+Create GroundStation Kourou;
+Kourou.CentralBody = Earth;
+Kourou.StateType = Spherical;
+Kourou.HorizonReference = Ellipsoid;
+Kourou.Location1 = 5.2;
+Kourou.Location2 = -52.7;
+Kourou.Location3 = 0.005;
+Kourou.MinimumElevationAngle = 7;
+
+Create GroundStation Dongara;
+Dongara.CentralBody = Earth;
+Dongara.StateType = Spherical;
+Dongara.HorizonReference = Ellipsoid;
+Dongara.Location1 = -29.1;
+Dongara.Location2 = 115.6;
+Dongara.Location3 = 0.04;
+Dongara.MinimumElevationAngle = 7;
+
+Create GroundStation Malindi;
+Malindi.CentralBody = Earth;
+Malindi.StateType = Spherical;
+Malindi.HorizonReference = Ellipsoid;
+Malindi.Location1 = -3.0;
+Malindi.Location2 = 40.2;
+Malindi.Location3 = 0.05;
+Malindi.MinimumElevationAngle = 7;
+
+%-- Contact and Eclipse Locators --
+Create ContactLocator CL;
+CL.Target = SAT;
+CL.Observers = {Kourou, Dongara, Malindi};
+CL.Filename = 'Contact.txt';
+
+Create EclipseLocator EL;
+EL.Spacecraft = SAT;
+EL.Filename = 'Eclipse.txt';
+
+%-- Ground Track Plot (required) --
+Create GroundTrackPlot GTrack;
+GTrack.Add = {SAT};
+GTrack.CentralBody = Earth;
+GTrack.Filename = 'GroundTrack.png';
+
+%-- 3D Orbit View (optional) --
+Create OrbitView GT;
+GT.Add = {SAT, Earth};
+
+%-- Propagate 10 days --
+BeginMissionSequence;
+Propagate PROP(SAT) {SAT.ElapsedDays = 10};
